@@ -5,7 +5,7 @@ Thank you for your interest in contributing! This project prioritizes security a
 ## Development Setup
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/yourusername/jsonformatter.git`
+2. Clone your fork: `git clone https://github.com/inmass/safe-json-formatter.git`
 3. Install dependencies: `npm install`
 4. Start the dev server: `npm run dev`
 

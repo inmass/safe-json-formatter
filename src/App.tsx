@@ -19,7 +19,7 @@ function App() {
         </p>
         <p>
           <a 
-            href="https://github.com/yourusername/jsonformatter" 
+            href="https://github.com/inmass/safe-json-formatter" 
             target="_blank" 
             rel="noopener noreferrer"
             className="github-link"
