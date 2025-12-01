@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import './JsonFormatter.css'
 
 interface FormatOptions {
@@ -11,10 +11,50 @@ const JsonFormatter = () => {
   const [output, setOutput] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const inputTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const outputTextareaRef = useRef<HTMLTextAreaElement>(null)
   const [options, setOptions] = useState<FormatOptions>({
     indent: 2,
     minify: false,
   })
+
+  // Sync textarea heights when one is resized
+  const syncHeights = useCallback((sourceElement: HTMLTextAreaElement) => {
+    const inputEl = inputTextareaRef.current
+    const outputEl = outputTextareaRef.current
+    
+    if (!inputEl || !outputEl) return
+
+    // Get the height of the resized element
+    const newHeight = sourceElement.clientHeight
+    
+    // Apply the same height to the other textarea
+    if (sourceElement === inputEl) {
+      outputEl.style.height = `${newHeight}px`
+    } else {
+      inputEl.style.height = `${newHeight}px`
+    }
+  }, [])
+
+  // Handle resize on input textarea
+  const handleInputResize = useCallback(() => {
+    if (inputTextareaRef.current) {
+      // Small delay to let the browser update the height first
+      setTimeout(() => {
+        syncHeights(inputTextareaRef.current!)
+      }, 10)
+    }
+  }, [syncHeights])
+
+  // Handle resize on output textarea
+  const handleOutputResize = useCallback(() => {
+    if (outputTextareaRef.current) {
+      // Small delay to let the browser update the height first
+      setTimeout(() => {
+        syncHeights(outputTextareaRef.current!)
+      }, 10)
+    }
+  }, [syncHeights])
 
   // Secure JSON parsing - no eval, no Function constructor
   // Handles double-encoded JSON (JSON string containing JSON)
@@ -205,9 +245,17 @@ const JsonFormatter = () => {
           </div>
           <div className="card-body">
             <textarea
+              ref={inputTextareaRef}
               className={`editor-textarea ${error ? 'error' : ''}`}
               value={input}
               onChange={handleInputChange}
+              onMouseUp={handleInputResize}
+              onMouseMove={() => {
+                if (inputTextareaRef.current) {
+                  handleInputResize()
+                }
+              }}
+              onTouchEnd={handleInputResize}
               placeholder="Paste or type your JSON here..."
               spellCheck={false}
             />
@@ -247,9 +295,17 @@ const JsonFormatter = () => {
           </div>
           <div className="card-body">
             <textarea
+              ref={outputTextareaRef}
               className="editor-textarea output"
               value={output}
               readOnly
+              onMouseUp={handleOutputResize}
+              onMouseMove={() => {
+                if (outputTextareaRef.current) {
+                  handleOutputResize()
+                }
+              }}
+              onTouchEnd={handleOutputResize}
               placeholder="Formatted JSON will appear here..."
               spellCheck={false}
             />

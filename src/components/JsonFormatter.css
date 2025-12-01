@@ -228,6 +228,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-bottom: 32px;
+  align-items: start;
 }
 
 @media (max-width: 968px) {
@@ -241,10 +242,12 @@
   flex-direction: column;
   background: var(--bg-primary);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
   border: 2px solid var(--border-color);
   box-shadow: var(--shadow-lg);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 0;
+  align-items: stretch;
 }
 
 .editor-card:hover {
@@ -386,6 +389,8 @@
   flex: 1;
   padding: 0;
   position: relative;
+  min-height: 500px;
+  overflow: visible;
 }
 
 .editor-textarea {
@@ -400,8 +405,9 @@
   resize: vertical;
   min-height: 500px;
   outline: none;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
   box-sizing: border-box;
+  display: block;
 }
 
 .editor-textarea:focus {
