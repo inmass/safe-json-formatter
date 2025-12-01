@@ -1,4 +1,4 @@
-# Contributing to JSON Formatter
+# Contributing to Safe JSON Formatter
 
 Thank you for your interest in contributing! This project prioritizes security and privacy, so please keep that in mind when contributing.
 

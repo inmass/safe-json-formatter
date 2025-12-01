@@ -5,7 +5,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>JSON Formatter</h1>
+        <h1>Safe JSON Formatter</h1>
         <p className="subtitle">Secure • Client-Side • No Data Storage</p>
       </header>
       <main className="app-main">

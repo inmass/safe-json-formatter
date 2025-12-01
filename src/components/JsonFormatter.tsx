@@ -10,6 +10,7 @@ const JsonFormatter = () => {
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const [options, setOptions] = useState<FormatOptions>({
     indent: 2,
     minify: false,
@@ -101,7 +102,11 @@ const JsonFormatter = () => {
     if (output) {
       try {
         await navigator.clipboard.writeText(output)
-        // Brief visual feedback could be added here
+        setCopied(true)
+        // Reset the icon after 2 seconds
+        setTimeout(() => {
+          setCopied(false)
+        }, 2000)
       } catch (err) {
         setError('Failed to copy to clipboard')
       }
@@ -130,13 +135,21 @@ const JsonFormatter = () => {
     }
   }, [input, formatJson, options])
 
+  const inputLength = input.length
+  const outputLength = output.length
+  const isValid = !error && output.length > 0
+
   return (
     <div className="json-formatter">
-      <div className="formatter-controls">
-        <div className="options-panel">
-          <label className="option-item">
-            <span>Indent:</span>
+      <div className="toolbar">
+        <div className="toolbar-left">
+          <div className="toolbar-section">
+            <label className="toolbar-label">
+              <span className="label-icon">⚙️</span>
+              <span className="label-text">Indentation</span>
+            </label>
             <select 
+              className="toolbar-select"
               value={options.indent} 
               onChange={(e) => handleOptionsChange({ indent: Number(e.target.value) })}
             >
@@ -144,79 +157,137 @@ const JsonFormatter = () => {
               <option value={4}>4 spaces</option>
               <option value={8}>8 spaces</option>
             </select>
-          </label>
-          <label className="option-item">
-            <input
-              type="checkbox"
-              checked={options.minify}
-              onChange={(e) => handleOptionsChange({ minify: e.target.checked })}
-            />
-            <span>Minify</span>
-          </label>
+          </div>
+          
+          <div className="toolbar-section">
+            <label className="toolbar-toggle">
+              <input
+                type="checkbox"
+                checked={options.minify}
+                onChange={(e) => handleOptionsChange({ minify: e.target.checked })}
+                className="toggle-input"
+              />
+              <span className="toggle-slider"></span>
+              <span className="toggle-label">Minify</span>
+            </label>
+          </div>
         </div>
-        <div className="action-buttons">
-          <button onClick={handleFormat} className="btn btn-primary">
-            Format
+
+        <div className="toolbar-right">
+          <button onClick={handleFormat} className="btn btn-primary btn-icon">
+            <span className="btn-icon-symbol">✨</span>
+            <span>Format JSON</span>
           </button>
-          <button onClick={handleClear} className="btn btn-secondary">
-            Clear
+          <button onClick={handleClear} className="btn btn-secondary btn-icon">
+            <span className="btn-icon-symbol">🗑️</span>
+            <span>Clear</span>
           </button>
         </div>
       </div>
 
-      <div className="editor-container">
-        <div className="editor-panel">
-          <div className="panel-header">
-            <h3>Input JSON</h3>
+      <div className="editor-grid">
+        <div className="editor-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <span className="card-icon">📥</span>
+              <div>
+                <h3 className="card-title">Input JSON</h3>
+                {inputLength > 0 && (
+                  <span className="card-meta">{inputLength.toLocaleString()} characters</span>
+                )}
+              </div>
+            </div>
+            {inputLength > 0 && (
+              <button onClick={handleClear} className="card-action" title="Clear input">
+                ✕
+              </button>
+            )}
           </div>
-          <textarea
-            className={`editor-input ${error ? 'error' : ''}`}
-            value={input}
-            onChange={handleInputChange}
-            placeholder="Paste or type your JSON here..."
-            spellCheck={false}
-          />
+          <div className="card-body">
+            <textarea
+              className={`editor-textarea ${error ? 'error' : ''}`}
+              value={input}
+              onChange={handleInputChange}
+              placeholder="Paste or type your JSON here..."
+              spellCheck={false}
+            />
+          </div>
         </div>
 
-        <div className="editor-panel">
-          <div className="panel-header">
-            <h3>Formatted Output</h3>
+        <div className="editor-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <span className="card-icon">📤</span>
+              <div>
+                <h3 className="card-title">Formatted Output</h3>
+                {outputLength > 0 && (
+                  <span className="card-meta">
+                    {outputLength.toLocaleString()} characters
+                    {isValid && <span className="status-badge success">✓ Valid</span>}
+                  </span>
+                )}
+              </div>
+            </div>
             {output && (
-              <div className="panel-actions">
-                <button onClick={handleCopy} className="btn-icon" title="Copy">
-                  📋
+              <div className="card-actions">
+                <button 
+                  onClick={handleCopy} 
+                  className={`card-action-btn ${copied ? 'copied' : ''}`}
+                  title={copied ? 'Copied!' : 'Copy to clipboard'}
+                >
+                  <span>{copied ? '✓' : '📋'}</span>
+                  <span className="btn-tooltip">{copied ? 'Copied!' : 'Copy'}</span>
                 </button>
-                <button onClick={handleDownload} className="btn-icon" title="Download">
-                  💾
+                <button onClick={handleDownload} className="card-action-btn" title="Download JSON">
+                  <span>💾</span>
+                  <span className="btn-tooltip">Download</span>
                 </button>
               </div>
             )}
           </div>
-          <textarea
-            className="editor-output"
-            value={output}
-            readOnly
-            placeholder="Formatted JSON will appear here..."
-            spellCheck={false}
-          />
+          <div className="card-body">
+            <textarea
+              className="editor-textarea output"
+              value={output}
+              readOnly
+              placeholder="Formatted JSON will appear here..."
+              spellCheck={false}
+            />
+          </div>
         </div>
       </div>
 
       {error && (
-        <div className="error-message">
-          <strong>Error:</strong> {error}
+        <div className="alert alert-error">
+          <div className="alert-icon">⚠️</div>
+          <div className="alert-content">
+            <strong className="alert-title">Invalid JSON</strong>
+            <p className="alert-message">{error}</p>
+          </div>
         </div>
       )}
 
-      <div className="info-panel">
-        <h4>Security & Privacy</h4>
-        <ul>
-          <li>✅ All processing happens locally in your browser</li>
-          <li>✅ No data is sent to any server</li>
-          <li>✅ No logging or storage of your JSON data</li>
-          <li>✅ No external dependencies for JSON parsing</li>
-          <li>✅ Open source - verify the code yourself</li>
-        </ul>
+      <div className="features-grid">
+        <div className="feature-card">
+          <div className="feature-icon">🔒</div>
+          <h4 className="feature-title">100% Client-Side</h4>
+          <p className="feature-desc">All processing happens locally in your browser</p>
+        </div>
+        <div className="feature-card">
+          <div className="feature-icon">🚫</div>
+          <h4 className="feature-title">No Data Transmission</h4>
+          <p className="feature-desc">Nothing is sent to any server</p>
+        </div>
+        <div className="feature-card">
+          <div className="feature-icon">📝</div>
+          <h4 className="feature-title">No Logging</h4>
+          <p className="feature-desc">No data is logged or stored anywhere</p>
+        </div>
+        <div className="feature-card">
+          <div className="feature-icon">🔍</div>
+          <h4 className="feature-title">Open Source</h4>
+          <p className="feature-desc">Verify the code yourself on GitHub</p>
+        </div>
       </div>
     </div>
   )

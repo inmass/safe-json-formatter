@@ -1,4 +1,4 @@
-# JSON Formatter
+# Safe JSON Formatter
 
 A secure, privacy-focused JSON formatter that runs entirely in your browser. **No data is ever sent to servers, logged, or stored anywhere.**
 
