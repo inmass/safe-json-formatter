@@ -37,7 +37,7 @@ This tool is designed with security and privacy as the top priorities:
 ```bash
 # Clone the repository
 git clone https://github.com/inmass/safe-json-formatter.git
-cd jsonformatter
+cd safe-json-formatter
 
 # Install dependencies
 npm install
@@ -118,7 +118,7 @@ Contributions are welcome! Please ensure that:
 ## 🔗 Links
 
 - [GitHub Repository](https://github.com/inmass/safe-json-formatter)
-- [Live Demo](https://inmass.github.io/jsonformatter)
+- [Live Demo](https://inmass.github.io/safe-json-formatter)
 
 ---
 
