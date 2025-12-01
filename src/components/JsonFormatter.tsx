@@ -17,7 +17,7 @@ const JsonFormatter = () => {
 
   // Secure JSON parsing - no eval, no Function constructor
   // Handles double-encoded JSON (JSON string containing JSON)
-  const parseJson = useCallback((text: string): any => {
+  const parseJson = useCallback((text: string): unknown => {
     try {
       // Remove any potential script tags or dangerous content
       const cleaned = text.trim()

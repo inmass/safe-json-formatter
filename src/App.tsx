@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import JsonFormatter from './components/JsonFormatter'
 import './App.css'
 
