@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://inmass.github.io/safe-json-formatter/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
+
