@@ -25,7 +25,7 @@ const isExpandable = (value: unknown) =>
 const isIdentifierKey = (key: string) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key)
 
 const formatPath = (segments: JsonPathSegment[]) => {
-  const path = segments.reduce((result, segment) => {
+  const path = segments.reduce<string>((result, segment) => {
     if (typeof segment === 'number') {
       return `${result}[${segment}]`
     }
