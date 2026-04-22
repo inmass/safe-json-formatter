@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import './JsonFormatter.css'
 
 interface FormatOptions {
@@ -6,55 +6,152 @@ interface FormatOptions {
   minify: boolean
 }
 
+type JsonPathSegment = string | number
+
+interface OutputLine {
+  text: string
+  path: string
+}
+
+const ROOT_PATH = '(root)'
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const isExpandable = (value: unknown) =>
+  (Array.isArray(value) && value.length > 0) ||
+  (isObject(value) && Object.keys(value).length > 0)
+
+const isIdentifierKey = (key: string) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key)
+
+const formatPath = (segments: JsonPathSegment[]) => {
+  const path = segments.reduce((result, segment) => {
+    if (typeof segment === 'number') {
+      return `${result}[${segment}]`
+    }
+
+    if (!result) {
+      return isIdentifierKey(segment) ? segment : `["${segment}"]`
+    }
+
+    return isIdentifierKey(segment)
+      ? `${result}.${segment}`
+      : `${result}["${segment}"]`
+  }, '')
+
+  return path || ROOT_PATH
+}
+
+const renderInlineJson = (value: unknown) => JSON.stringify(value)
+
+const buildOutputLines = (
+  value: unknown,
+  indent: number,
+  minify: boolean,
+  depth = 0,
+  path: JsonPathSegment[] = [],
+): OutputLine[] => {
+  if (minify) {
+    return [{ text: JSON.stringify(value), path: formatPath(path) }]
+  }
+
+  const currentPath = formatPath(path)
+  const indentation = ' '.repeat(depth * indent)
+  const childIndentation = ' '.repeat((depth + 1) * indent)
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return [{ text: `${indentation}[]`, path: currentPath }]
+    }
+
+    const lines: OutputLine[] = [{ text: `${indentation}[`, path: currentPath }]
+
+    value.forEach((item, index) => {
+      const itemPath = [...path, index]
+      const isLastItem = index === value.length - 1
+
+      if (isExpandable(item)) {
+        const childLines = buildOutputLines(item, indent, false, depth + 1, itemPath)
+        childLines.forEach((line, lineIndex) => {
+          const isLastLine = lineIndex === childLines.length - 1
+          lines.push({
+            text: isLastLine && !isLastItem ? `${line.text},` : line.text,
+            path: line.path,
+          })
+        })
+      } else {
+        lines.push({
+          text: `${childIndentation}${renderInlineJson(item)}${isLastItem ? '' : ','}`,
+          path: formatPath(itemPath),
+        })
+      }
+    })
+
+    lines.push({ text: `${indentation}]`, path: currentPath })
+    return lines
+  }
+
+  if (isObject(value)) {
+    const entries = Object.entries(value)
+
+    if (entries.length === 0) {
+      return [{ text: `${indentation}{}`, path: currentPath }]
+    }
+
+    const lines: OutputLine[] = [{ text: `${indentation}{`, path: currentPath }]
+
+    entries.forEach(([key, childValue], index) => {
+      const childPath = [...path, key]
+      const isLastEntry = index === entries.length - 1
+      const serializedKey = JSON.stringify(key)
+
+      if (isExpandable(childValue)) {
+        const childLines = buildOutputLines(childValue, indent, false, depth + 1, childPath)
+
+        childLines.forEach((line, lineIndex) => {
+          const isFirstLine = lineIndex === 0
+          const isLastLine = lineIndex === childLines.length - 1
+          let text = line.text
+
+          if (isFirstLine) {
+            text = `${childIndentation}${serializedKey}: ${line.text.trimStart()}`
+          }
+
+          if (isLastLine && !isLastEntry) {
+            text = `${text},`
+          }
+
+          lines.push({
+            text,
+            path: line.path,
+          })
+        })
+      } else {
+        lines.push({
+          text: `${childIndentation}${serializedKey}: ${renderInlineJson(childValue)}${isLastEntry ? '' : ','}`,
+          path: formatPath(childPath),
+        })
+      }
+    })
+
+    lines.push({ text: `${indentation}}`, path: currentPath })
+    return lines
+  }
+
+  return [{ text: `${indentation}${renderInlineJson(value)}`, path: currentPath }]
+}
+
 const JsonFormatter = () => {
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
+  const [outputLines, setOutputLines] = useState<OutputLine[]>([])
+  const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  const inputTextareaRef = useRef<HTMLTextAreaElement>(null)
-  const outputTextareaRef = useRef<HTMLTextAreaElement>(null)
   const [options, setOptions] = useState<FormatOptions>({
     indent: 2,
     minify: false,
   })
-
-  // Sync textarea heights when one is resized
-  const syncHeights = useCallback((sourceElement: HTMLTextAreaElement) => {
-    const inputEl = inputTextareaRef.current
-    const outputEl = outputTextareaRef.current
-    
-    if (!inputEl || !outputEl) return
-
-    // Get the height of the resized element
-    const newHeight = sourceElement.clientHeight
-    
-    // Apply the same height to the other textarea
-    if (sourceElement === inputEl) {
-      outputEl.style.height = `${newHeight}px`
-    } else {
-      inputEl.style.height = `${newHeight}px`
-    }
-  }, [])
-
-  // Handle resize on input textarea
-  const handleInputResize = useCallback(() => {
-    if (inputTextareaRef.current) {
-      // Small delay to let the browser update the height first
-      setTimeout(() => {
-        syncHeights(inputTextareaRef.current!)
-      }, 10)
-    }
-  }, [syncHeights])
-
-  // Handle resize on output textarea
-  const handleOutputResize = useCallback(() => {
-    if (outputTextareaRef.current) {
-      // Small delay to let the browser update the height first
-      setTimeout(() => {
-        syncHeights(outputTextareaRef.current!)
-      }, 10)
-    }
-  }, [syncHeights])
 
   // Secure JSON parsing - no eval, no Function constructor
   // Handles double-encoded JSON (JSON string containing JSON)
@@ -100,16 +197,19 @@ const JsonFormatter = () => {
       setError(null)
       
       const parsed = parseJson(text)
+      const formattedOutput = opts.minify
+        ? JSON.stringify(parsed)
+        : JSON.stringify(parsed, null, opts.indent)
       
-      if (opts.minify) {
-        setOutput(JSON.stringify(parsed))
-      } else {
-        setOutput(JSON.stringify(parsed, null, opts.indent))
-      }
+      setOutput(formattedOutput)
+      setOutputLines(buildOutputLines(parsed, opts.indent, opts.minify))
+      setSelectedPath(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       setOutput('')
+      setOutputLines([])
+      setSelectedPath(null)
     }
   }, [parseJson])
 
@@ -135,6 +235,8 @@ const JsonFormatter = () => {
   const handleClear = useCallback(() => {
     setInput('')
     setOutput('')
+    setOutputLines([])
+    setSelectedPath(null)
     setError(null)
   }, [])
 
@@ -245,17 +347,9 @@ const JsonFormatter = () => {
           </div>
           <div className="card-body">
             <textarea
-              ref={inputTextareaRef}
               className={`editor-textarea ${error ? 'error' : ''}`}
               value={input}
               onChange={handleInputChange}
-              onMouseUp={handleInputResize}
-              onMouseMove={() => {
-                if (inputTextareaRef.current) {
-                  handleInputResize()
-                }
-              }}
-              onTouchEnd={handleInputResize}
               placeholder="Paste or type your JSON here..."
               spellCheck={false}
             />
@@ -294,21 +388,31 @@ const JsonFormatter = () => {
             )}
           </div>
           <div className="card-body">
-            <textarea
-              ref={outputTextareaRef}
-              className="editor-textarea output"
-              value={output}
-              readOnly
-              onMouseUp={handleOutputResize}
-              onMouseMove={() => {
-                if (outputTextareaRef.current) {
-                  handleOutputResize()
-                }
-              }}
-              onTouchEnd={handleOutputResize}
-              placeholder="Formatted JSON will appear here..."
-              spellCheck={false}
-            />
+            {output ? (
+              <>
+                <div className="selected-path" aria-live="polite">
+                  <span className="selected-path-label">Selected path</span>
+                  <code className="selected-path-value">
+                    {selectedPath ?? 'Click any line to inspect its path'}
+                  </code>
+                </div>
+                <div className="json-output-viewer" role="list" aria-label="Formatted JSON output">
+                  {outputLines.map((line, index) => (
+                    <button
+                      key={`${index}-${line.path}-${line.text}`}
+                      type="button"
+                      className={`json-output-line ${selectedPath === line.path ? 'selected' : ''}`}
+                      onClick={() => setSelectedPath(line.path)}
+                      title={line.path}
+                    >
+                      {line.text}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="json-output-empty">Formatted JSON will appear here...</div>
+            )}
           </div>
         </div>
       </div>

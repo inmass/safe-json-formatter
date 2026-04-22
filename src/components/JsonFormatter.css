@@ -424,6 +424,75 @@
   cursor: text;
 }
 
+.selected-path {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 24px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.selected-path-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.selected-path-value {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 14px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.json-output-viewer,
+.json-output-empty {
+  min-height: 500px;
+  box-sizing: border-box;
+  background: var(--bg-secondary);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.json-output-viewer {
+  padding: 12px 0;
+}
+
+.json-output-line {
+  display: block;
+  width: 100%;
+  padding: 0 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  white-space: pre;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.json-output-line:hover {
+  background: var(--bg-hover);
+}
+
+.json-output-line.selected {
+  background: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.json-output-empty {
+  display: flex;
+  align-items: flex-start;
+  padding: 24px;
+  color: var(--text-secondary);
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
