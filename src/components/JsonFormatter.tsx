@@ -240,6 +240,15 @@ const JsonFormatter = () => {
     setError(null)
   }, [])
 
+  const handleLineSelect = useCallback((path: string) => {
+    const selection = window.getSelection()
+    if (selection && selection.toString().trim()) {
+      return
+    }
+
+    setSelectedPath(path)
+  }, [])
+
   const handleCopy = useCallback(async () => {
     if (output) {
       try {
@@ -398,15 +407,22 @@ const JsonFormatter = () => {
                 </div>
                 <div className="json-output-viewer" role="list" aria-label="Formatted JSON output">
                   {outputLines.map((line, index) => (
-                    <button
+                    <div
                       key={`${index}-${line.path}-${line.text}`}
-                      type="button"
+                      role="button"
+                      tabIndex={0}
                       className={`json-output-line ${selectedPath === line.path ? 'selected' : ''}`}
-                      onClick={() => setSelectedPath(line.path)}
+                      onClick={() => handleLineSelect(line.path)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          handleLineSelect(line.path)
+                        }
+                      }}
                       title={line.path}
                     >
                       {line.text}
-                    </button>
+                    </div>
                   ))}
                 </div>
               </>
