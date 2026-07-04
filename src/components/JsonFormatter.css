@@ -2,6 +2,8 @@
   max-width: 1600px;
   margin: 0 auto;
   padding: 24px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .toolbar {
@@ -225,10 +227,11 @@
 
 .editor-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
   margin-bottom: 32px;
   align-items: start;
+  min-width: 0;
 }
 
 @media (max-width: 968px) {
@@ -242,11 +245,12 @@
   flex-direction: column;
   background: var(--bg-primary);
   border-radius: 16px;
-  overflow: visible;
+  overflow: hidden;
   border: 2px solid var(--border-color);
   box-shadow: var(--shadow-lg);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 0;
+  min-width: 0;
   align-items: stretch;
 }
 
@@ -331,6 +335,22 @@
 .card-actions {
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.output-toggle {
+  margin-right: 4px;
+}
+
+.output-toggle.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.output-toggle.disabled .toggle-slider {
+  cursor: not-allowed;
 }
 
 .card-action-btn {
@@ -389,12 +409,31 @@
   flex: 1;
   padding: 0;
   position: relative;
-  min-height: 500px;
-  overflow: visible;
+  min-height: 280px;
+  max-height: min(62vh, 640px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-body-output {
+  background: var(--bg-secondary);
+}
+
+.card-scroll-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .editor-textarea {
   width: 100%;
+  max-width: 100%;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   padding: 24px;
   border: none;
   background: var(--bg-primary);
@@ -402,12 +441,14 @@
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
   font-size: 14px;
   line-height: 1.8;
-  resize: vertical;
-  min-height: 500px;
+  resize: none;
   outline: none;
   transition: background 0.2s ease;
   box-sizing: border-box;
   display: block;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .editor-textarea:focus {
@@ -428,17 +469,30 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex-shrink: 0;
   padding: 18px 24px 12px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
 
 .selected-path-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-secondary);
+}
+
+.selected-path-copied {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--success-color);
+  animation: copySuccess 0.3s ease;
 }
 
 .selected-path-value {
@@ -448,48 +502,22 @@
   word-break: break-word;
 }
 
-.json-output-viewer,
+.json-output-minified,
 .json-output-empty {
-  min-height: 500px;
   box-sizing: border-box;
-  background: var(--bg-secondary);
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
   font-size: 14px;
   line-height: 1.8;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.json-output-viewer {
-  padding: 12px 0;
-}
-
-.json-output-line {
-  display: block;
-  width: 100%;
-  padding: 0 24px;
-  border: none;
-  background: transparent;
+.json-output-minified {
+  padding: 24px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   color: var(--text-primary);
-  font: inherit;
-  line-height: inherit;
-  text-align: left;
-  white-space: pre;
-  cursor: pointer;
-  user-select: text;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.json-output-line:hover {
-  background: var(--bg-hover);
-}
-
-.json-output-line:focus {
-  outline: none;
-  background: var(--bg-hover);
-}
-
-.json-output-line.selected {
-  background: var(--primary-light);
-  color: var(--primary-color);
 }
 
 .json-output-empty {

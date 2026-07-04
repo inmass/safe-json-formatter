@@ -1,153 +1,23 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import './JsonFormatter.css'
+import JsonTreeView from './JsonTreeView'
+import { serializeValueForClipboard } from '../utils/jsonValue'
 
 interface FormatOptions {
   indent: number
   minify: boolean
 }
 
-type JsonPathSegment = string | number
-
-interface OutputLine {
-  text: string
-  path: string
-}
-
-const ROOT_PATH = '(root)'
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-
-const isExpandable = (value: unknown) =>
-  (Array.isArray(value) && value.length > 0) ||
-  (isObject(value) && Object.keys(value).length > 0)
-
-const isIdentifierKey = (key: string) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key)
-
-const formatPath = (segments: JsonPathSegment[]) => {
-  const path = segments.reduce<string>((result, segment) => {
-    if (typeof segment === 'number') {
-      return `${result}[${segment}]`
-    }
-
-    if (!result) {
-      return isIdentifierKey(segment) ? segment : `["${segment}"]`
-    }
-
-    return isIdentifierKey(segment)
-      ? `${result}.${segment}`
-      : `${result}["${segment}"]`
-  }, '')
-
-  return path || ROOT_PATH
-}
-
-const renderInlineJson = (value: unknown) => JSON.stringify(value)
-
-const buildOutputLines = (
-  value: unknown,
-  indent: number,
-  minify: boolean,
-  depth = 0,
-  path: JsonPathSegment[] = [],
-): OutputLine[] => {
-  if (minify) {
-    return [{ text: JSON.stringify(value), path: formatPath(path) }]
-  }
-
-  const currentPath = formatPath(path)
-  const indentation = ' '.repeat(depth * indent)
-  const childIndentation = ' '.repeat((depth + 1) * indent)
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return [{ text: `${indentation}[]`, path: currentPath }]
-    }
-
-    const lines: OutputLine[] = [{ text: `${indentation}[`, path: currentPath }]
-
-    value.forEach((item, index) => {
-      const itemPath = [...path, index]
-      const isLastItem = index === value.length - 1
-
-      if (isExpandable(item)) {
-        const childLines = buildOutputLines(item, indent, false, depth + 1, itemPath)
-        childLines.forEach((line, lineIndex) => {
-          const isLastLine = lineIndex === childLines.length - 1
-          lines.push({
-            text: isLastLine && !isLastItem ? `${line.text},` : line.text,
-            path: line.path,
-          })
-        })
-      } else {
-        lines.push({
-          text: `${childIndentation}${renderInlineJson(item)}${isLastItem ? '' : ','}`,
-          path: formatPath(itemPath),
-        })
-      }
-    })
-
-    lines.push({ text: `${indentation}]`, path: currentPath })
-    return lines
-  }
-
-  if (isObject(value)) {
-    const entries = Object.entries(value)
-
-    if (entries.length === 0) {
-      return [{ text: `${indentation}{}`, path: currentPath }]
-    }
-
-    const lines: OutputLine[] = [{ text: `${indentation}{`, path: currentPath }]
-
-    entries.forEach(([key, childValue], index) => {
-      const childPath = [...path, key]
-      const isLastEntry = index === entries.length - 1
-      const serializedKey = JSON.stringify(key)
-
-      if (isExpandable(childValue)) {
-        const childLines = buildOutputLines(childValue, indent, false, depth + 1, childPath)
-
-        childLines.forEach((line, lineIndex) => {
-          const isFirstLine = lineIndex === 0
-          const isLastLine = lineIndex === childLines.length - 1
-          let text = line.text
-
-          if (isFirstLine) {
-            text = `${childIndentation}${serializedKey}: ${line.text.trimStart()}`
-          }
-
-          if (isLastLine && !isLastEntry) {
-            text = `${text},`
-          }
-
-          lines.push({
-            text,
-            path: line.path,
-          })
-        })
-      } else {
-        lines.push({
-          text: `${childIndentation}${serializedKey}: ${renderInlineJson(childValue)}${isLastEntry ? '' : ','}`,
-          path: formatPath(childPath),
-        })
-      }
-    })
-
-    lines.push({ text: `${indentation}}`, path: currentPath })
-    return lines
-  }
-
-  return [{ text: `${indentation}${renderInlineJson(value)}`, path: currentPath }]
-}
-
 const JsonFormatter = () => {
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
-  const [outputLines, setOutputLines] = useState<OutputLine[]>([])
+  const [parsedValue, setParsedValue] = useState<unknown>(null)
+  const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(() => new Set())
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [copyOnClick, setCopyOnClick] = useState(false)
+  const [copiedValuePath, setCopiedValuePath] = useState<string | null>(null)
   const [options, setOptions] = useState<FormatOptions>({
     indent: 2,
     minify: false,
@@ -202,13 +72,15 @@ const JsonFormatter = () => {
         : JSON.stringify(parsed, null, opts.indent)
       
       setOutput(formattedOutput)
-      setOutputLines(buildOutputLines(parsed, opts.indent, opts.minify))
+      setParsedValue(parsed)
+      setCollapsedPaths(new Set())
       setSelectedPath(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
       setOutput('')
-      setOutputLines([])
+      setParsedValue(null)
+      setCollapsedPaths(new Set())
       setSelectedPath(null)
     }
   }, [parseJson])
@@ -235,18 +107,55 @@ const JsonFormatter = () => {
   const handleClear = useCallback(() => {
     setInput('')
     setOutput('')
-    setOutputLines([])
+    setParsedValue(null)
+    setCollapsedPaths(new Set())
     setSelectedPath(null)
     setError(null)
   }, [])
 
-  const handleLineSelect = useCallback((path: string) => {
+  const copiedValueTimeoutRef = useRef<number | null>(null)
+
+  const handleLineSelect = useCallback(async (path: string, value: unknown) => {
     const selection = window.getSelection()
     if (selection && selection.toString().trim()) {
       return
     }
 
     setSelectedPath(path)
+
+    if (!copyOnClick) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(serializeValueForClipboard(value, options.indent))
+
+      if (copiedValueTimeoutRef.current !== null) {
+        window.clearTimeout(copiedValueTimeoutRef.current)
+      }
+
+      setCopiedValuePath(path)
+      copiedValueTimeoutRef.current = window.setTimeout(() => {
+        setCopiedValuePath(null)
+        copiedValueTimeoutRef.current = null
+      }, 2000)
+    } catch {
+      setError('Failed to copy value to clipboard')
+    }
+  }, [copyOnClick, options.indent])
+
+  const handleToggleCollapse = useCallback((path: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+
+    setCollapsedPaths((previous) => {
+      const next = new Set(previous)
+      if (next.has(path)) {
+        next.delete(path)
+      } else {
+        next.add(path)
+      }
+      return next
+    })
   }, [])
 
   const handleCopy = useCallback(async () => {
@@ -381,6 +290,20 @@ const JsonFormatter = () => {
             </div>
             {output && (
               <div className="card-actions">
+                <label
+                  className={`toolbar-toggle output-toggle ${options.minify ? 'disabled' : ''}`}
+                  title={options.minify ? 'Turn off Minify to use click-to-copy' : 'Copy the value at the clicked path'}
+                >
+                  <input
+                    type="checkbox"
+                    checked={copyOnClick}
+                    disabled={options.minify}
+                    onChange={(event) => setCopyOnClick(event.target.checked)}
+                    className="toggle-input"
+                  />
+                  <span className="toggle-slider"></span>
+                  <span className="toggle-label">Click to copy</span>
+                </label>
                 <button 
                   onClick={handleCopy} 
                   className={`card-action-btn ${copied ? 'copied' : ''}`}
@@ -396,38 +319,43 @@ const JsonFormatter = () => {
               </div>
             )}
           </div>
-          <div className="card-body">
+          <div className="card-body card-body-output">
             {output ? (
               <>
                 <div className="selected-path" aria-live="polite">
-                  <span className="selected-path-label">Selected path</span>
+                  <span className="selected-path-label">
+                    Selected path
+                    {copiedValuePath && copiedValuePath === selectedPath && (
+                      <span className="selected-path-copied">Copied!</span>
+                    )}
+                  </span>
                   <code className="selected-path-value">
-                    {selectedPath ?? 'Click any line to inspect its path'}
+                    {selectedPath ?? (
+                      copyOnClick
+                        ? 'Click any value to copy it to the clipboard'
+                        : 'Click any line to inspect its path'
+                    )}
                   </code>
                 </div>
-                <div className="json-output-viewer" role="list" aria-label="Formatted JSON output">
-                  {outputLines.map((line, index) => (
-                    <div
-                      key={`${index}-${line.path}-${line.text}`}
-                      role="button"
-                      tabIndex={0}
-                      className={`json-output-line ${selectedPath === line.path ? 'selected' : ''}`}
-                      onClick={() => handleLineSelect(line.path)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault()
-                          handleLineSelect(line.path)
-                        }
-                      }}
-                      title={line.path}
-                    >
-                      {line.text}
-                    </div>
-                  ))}
+                <div className="card-scroll-area">
+                  {options.minify ? (
+                    <div className="json-output-minified">{output}</div>
+                  ) : (
+                    <JsonTreeView
+                      value={parsedValue}
+                      indent={options.indent}
+                      collapsedPaths={collapsedPaths}
+                      onToggle={handleToggleCollapse}
+                      selectedPath={selectedPath}
+                      onSelectPath={handleLineSelect}
+                    />
+                  )}
                 </div>
               </>
             ) : (
-              <div className="json-output-empty">Formatted JSON will appear here...</div>
+              <div className="card-scroll-area">
+                <div className="json-output-empty">Formatted JSON will appear here...</div>
+              </div>
             )}
           </div>
         </div>

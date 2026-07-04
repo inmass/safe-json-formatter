@@ -1,0 +1,93 @@
+.json-tree-view {
+  padding: 12px 0;
+  box-sizing: border-box;
+  background: var(--bg-secondary);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.json-tree-line {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 24px 0 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  cursor: pointer;
+  user-select: text;
+  transition: background 0.2s ease, color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.json-tree-line:hover {
+  background: var(--bg-hover);
+}
+
+.json-tree-line:focus {
+  outline: none;
+  background: var(--bg-hover);
+}
+
+.json-tree-line.selected {
+  background: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.json-tree-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.json-tree-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
+}
+
+.json-tree-key {
+  color: var(--json-key-color, #881391);
+}
+
+.json-tree-primitive {
+  color: var(--json-value-color, inherit);
+}
+
+.json-tree-bracket,
+.json-tree-punctuation {
+  color: var(--text-secondary);
+}
+
+.json-tree-collapsed {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .json-tree-key {
+    color: #c792ea;
+  }
+}
