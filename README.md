@@ -19,6 +19,7 @@ This tool is designed with security and privacy as the top priorities:
 - **Format JSON** with customizable indentation (2, 4, or 8 spaces)
 - **Minify JSON** to compact format
 - **Validate JSON** with clear error messages
+- **Suggested Fixes** for almost-JSON (missing/trailing commas, unquoted keys, single quotes, `NULL`/`None`/`True`, comments, missing brackets, `{...}` placeholders) — computed locally by a small hand-written parser, applied only when you click, with undo
 - **Copy to Clipboard** formatted output
 - **Download** formatted JSON as a file
 - **Real-time Formatting** as you type

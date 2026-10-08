@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import './JsonFormatter.css'
 import JsonTreeView from './JsonTreeView'
 import { serializeValueForClipboard } from '../utils/jsonValue'
+import { repairJson, RepairResult } from '../utils/jsonRepair'
 
 interface FormatOptions {
   indent: number
@@ -15,6 +16,8 @@ const JsonFormatter = () => {
   const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(() => new Set())
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [repair, setRepair] = useState<RepairResult | null>(null)
+  const [inputBeforeRepair, setInputBeforeRepair] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [copyOnClick, setCopyOnClick] = useState(false)
   const [copiedValuePath, setCopiedValuePath] = useState<string | null>(null)
@@ -72,12 +75,15 @@ const JsonFormatter = () => {
         : JSON.stringify(parsed, null, opts.indent)
       
       setOutput(formattedOutput)
+      setRepair(null)
       setParsedValue(parsed)
       setCollapsedPaths(new Set())
       setSelectedPath(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
       setError(errorMessage)
+      // Suggest a fix only; the input is never changed without the user's click.
+      setRepair(repairJson(text))
       setOutput('')
       setParsedValue(null)
       setCollapsedPaths(new Set())
@@ -88,6 +94,7 @@ const JsonFormatter = () => {
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newInput = e.target.value
     setInput(newInput)
+    setInputBeforeRepair(null)
     
     // Auto-format on change (debounced would be better for large inputs)
     if (newInput.trim()) {
@@ -95,8 +102,28 @@ const JsonFormatter = () => {
     } else {
       setOutput('')
       setError(null)
+      setRepair(null)
     }
   }, [formatJson, options])
+
+  const handleApplyRepair = useCallback(() => {
+    if (!repair) {
+      return
+    }
+    const repairedInput = JSON.stringify(JSON.parse(repair.repaired), null, options.indent)
+    setInputBeforeRepair(input)
+    setInput(repairedInput)
+    formatJson(repairedInput, options)
+  }, [repair, input, formatJson, options])
+
+  const handleUndoRepair = useCallback(() => {
+    if (inputBeforeRepair === null) {
+      return
+    }
+    setInput(inputBeforeRepair)
+    setInputBeforeRepair(null)
+    formatJson(inputBeforeRepair, options)
+  }, [inputBeforeRepair, formatJson, options])
 
   const handleFormat = useCallback(() => {
     if (input.trim()) {
@@ -111,6 +138,8 @@ const JsonFormatter = () => {
     setCollapsedPaths(new Set())
     setSelectedPath(null)
     setError(null)
+    setRepair(null)
+    setInputBeforeRepair(null)
   }, [])
 
   const copiedValueTimeoutRef = useRef<number | null>(null)
@@ -367,7 +396,36 @@ const JsonFormatter = () => {
           <div className="alert-content">
             <strong className="alert-title">Invalid JSON</strong>
             <p className="alert-message">{error}</p>
+            {repair && (
+              <div className="repair-suggestion">
+                <strong className="repair-title">Suggested fix</strong>
+                <ul className="repair-list">
+                  {repair.fixes.map((fix) => (
+                    <li key={fix}>{fix}</li>
+                  ))}
+                </ul>
+                <button onClick={handleApplyRepair} className="btn btn-primary btn-icon repair-apply">
+                  <span className="btn-icon-symbol">🛠️</span>
+                  <span>Apply fix</span>
+                </button>
+              </div>
+            )}
           </div>
+        </div>
+      )}
+
+      {!error && inputBeforeRepair !== null && (
+        <div className="alert alert-info">
+          <div className="alert-icon">🛠️</div>
+          <div className="alert-content">
+            <strong className="alert-title">Fix applied</strong>
+            <p className="alert-message">
+              Your input was rewritten as valid JSON. Review it before relying on it.
+            </p>
+          </div>
+          <button onClick={handleUndoRepair} className="btn btn-secondary repair-undo">
+            Undo
+          </button>
         </div>
       )}
 

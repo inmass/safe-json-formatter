@@ -573,6 +573,40 @@
   opacity: 0.9;
 }
 
+.alert-info {
+  align-items: center;
+  background: var(--primary-light);
+  color: var(--text-primary);
+  border-color: var(--primary-color);
+}
+
+.repair-suggestion {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid currentColor;
+}
+
+.repair-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.repair-list {
+  margin: 8px 0 16px;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.repair-list li {
+  margin-bottom: 4px;
+}
+
+.repair-undo {
+  flex-shrink: 0;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
