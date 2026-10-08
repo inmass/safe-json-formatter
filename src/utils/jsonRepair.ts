@@ -66,10 +66,38 @@ const SIMPLE_ESCAPES: Record<string, string> = {
   t: '\t',
 }
 
-export const repairJson = (text: string): RepairResult | null => {
-  const fixCounts = new Map<string, number>()
+const WRAPPING_QUOTES = new Set(["'", '`', '\u2018', '\u201c'])
+
+// Text copied from a shell command often keeps its quotes: curl -d '{"a": 1}'
+const stripWrappingQuotes = (input: string): string | null => {
+  const trimmed = input.trim()
+  const open = trimmed.charAt(0)
+  if (!WRAPPING_QUOTES.has(open)) return null
+  const inner = trimmed.slice(1).trim()
+  if (!inner.startsWith('{') && !inner.startsWith('[')) return null
+  return inner.endsWith(closingQuoteFor(open)) ? inner.slice(0, -1) : inner
+}
+
+const isContainer = (json: string) => json.startsWith('{') || json.startsWith('[')
+
+const describeSnippet = (raw: string) => {
+  const snippet = raw.trim()
+  return snippet.length > 30 ? `${snippet.slice(0, 30)}…` : snippet
+}
+
+export const repairJson = (input: string): RepairResult | null => {
+  // Fixes are collected per top-level value so the fixes for stray text that
+  // gets dropped don't show up in the summary.
+  const globalFixes = new Map<string, number>()
+  let fixCounts = globalFixes
   const fix = (message: string) => {
     fixCounts.set(message, (fixCounts.get(message) ?? 0) + 1)
+  }
+
+  const unwrapped = stripWrappingQuotes(input)
+  const text = unwrapped ?? input
+  if (unwrapped !== null) {
+    fix('Removed quotes wrapped around the whole JSON')
   }
 
   let pos = 0
@@ -374,7 +402,7 @@ export const repairJson = (text: string): RepairResult | null => {
   }
 
   try {
-    const values: string[] = []
+    const values: { json: string; raw: string; fixes: Map<string, number> }[] = []
     skipWhitespaceAndComments()
     while (!atEnd()) {
       const loopStart = pos
@@ -384,19 +412,39 @@ export const repairJson = (text: string): RepairResult | null => {
       } else if (peek() === ',') {
         pos++
       } else {
-        values.push(parseValue(0))
+        fixCounts = new Map()
+        const json = parseValue(0)
+        values.push({ json, raw: text.slice(loopStart, pos), fixes: fixCounts })
+        fixCounts = globalFixes
       }
       ensureProgress(loopStart)
       skipWhitespaceAndComments()
     }
 
-    if (values.length === 0) {
+    // Leftovers next to real objects/arrays (a stray quote, a log prefix...)
+    // are dropped rather than wrapped into an array with the JSON.
+    let kept = values
+    if (values.some((value) => isContainer(value.json))) {
+      kept = values.filter((value) => isContainer(value.json))
+      for (const value of values) {
+        if (!isContainer(value.json)) {
+          fix(`Removed stray text outside the JSON: ${describeSnippet(value.raw)}`)
+        }
+      }
+    }
+    if (kept.length === 0) {
       return null
     }
-    let repaired = values[0]
-    if (values.length > 1) {
+    for (const value of kept) {
+      for (const [message, count] of value.fixes) {
+        fixCounts.set(message, (fixCounts.get(message) ?? 0) + count)
+      }
+    }
+
+    let repaired = kept[0].json
+    if (kept.length > 1) {
       fix('Wrapped multiple top-level values in an array')
-      repaired = `[${values.join(',')}]`
+      repaired = `[${kept.map((value) => value.json).join(',')}]`
     }
 
     // Final authority is the native parser.
