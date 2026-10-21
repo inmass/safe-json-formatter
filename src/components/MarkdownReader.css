@@ -1,0 +1,152 @@
+.markdown-preview {
+  padding: 24px 28px;
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.markdown-preview > :first-child {
+  margin-top: 0;
+}
+
+.markdown-preview > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  margin: 1.4em 0 0.6em;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.markdown-preview h1 {
+  font-size: 1.9em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.markdown-preview h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.markdown-preview h3 {
+  font-size: 1.25em;
+}
+
+.markdown-preview h4 {
+  font-size: 1.05em;
+}
+
+.markdown-preview h5,
+.markdown-preview h6 {
+  font-size: 0.95em;
+  color: var(--text-secondary);
+}
+
+.markdown-preview p,
+.markdown-preview ul,
+.markdown-preview ol,
+.markdown-preview blockquote,
+.markdown-preview pre,
+.markdown-preview table {
+  margin: 0 0 1em;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  padding-left: 1.8em;
+}
+
+.markdown-preview li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-preview li > ul,
+.markdown-preview li > ol {
+  margin: 0.25em 0 0;
+}
+
+.markdown-preview li:has(> input[type='checkbox']) {
+  list-style: none;
+}
+
+.markdown-preview li > input[type='checkbox'] {
+  margin: 0 0.5em 0 -1.4em;
+  vertical-align: middle;
+}
+
+.markdown-preview a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview blockquote {
+  padding: 0.2em 1em;
+  color: var(--text-secondary);
+  border-left: 4px solid var(--primary-color);
+  background: var(--bg-tertiary);
+  border-radius: 0 8px 8px 0;
+}
+
+.markdown-preview code {
+  padding: 0.15em 0.4em;
+  font-size: 0.88em;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+}
+
+.markdown-preview pre {
+  padding: 16px;
+  overflow-x: auto;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.markdown-preview pre code {
+  padding: 0;
+  background: none;
+  font-size: 0.85em;
+  overflow-wrap: normal;
+}
+
+.markdown-preview table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  padding: 8px 14px;
+  border: 1px solid var(--border-color);
+}
+
+.markdown-preview th {
+  font-weight: 700;
+  background: var(--bg-tertiary);
+}
+
+.markdown-preview hr {
+  margin: 1.5em 0;
+  border: none;
+  border-top: 2px solid var(--border-color);
+}
+
+.markdown-preview img {
+  max-width: 100%;
+}

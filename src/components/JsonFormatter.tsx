@@ -428,29 +428,6 @@ const JsonFormatter = () => {
           </button>
         </div>
       )}
-
-      <div className="features-grid">
-        <div className="feature-card">
-          <div className="feature-icon">🔒</div>
-          <h4 className="feature-title">100% Client-Side</h4>
-          <p className="feature-desc">All processing happens locally in your browser</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-icon">🚫</div>
-          <h4 className="feature-title">No Data Transmission</h4>
-          <p className="feature-desc">Nothing is sent to any server</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-icon">📝</div>
-          <h4 className="feature-title">No Logging</h4>
-          <p className="feature-desc">No data is logged or stored anywhere</p>
-        </div>
-        <div className="feature-card">
-          <div className="feature-icon">🔍</div>
-          <h4 className="feature-title">Open Source</h4>
-          <p className="feature-desc">Verify the code yourself on GitHub</p>
-        </div>
-      </div>
     </div>
   )
 }
