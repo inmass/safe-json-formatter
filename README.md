@@ -12,7 +12,7 @@ This tool is designed with security and privacy as the top priorities:
 - ✅ **No Tracking**: No analytics, cookies, or tracking scripts
 - ✅ **Open Source**: Full source code available for inspection
 - ✅ **Secure Parsing**: Uses only native `JSON.parse()` - no `eval()` or `Function()` constructor
-- ✅ **No Dependencies**: Minimal dependencies, all audited
+- ✅ **Minimal Dependencies**: Only React, plus pinned `marked`, `DOMPurify` and `sql-formatter` for the Markdown and SQL tools
 
 ## 🚀 Features
 
@@ -25,6 +25,8 @@ This tool is designed with security and privacy as the top priorities:
 - **Real-time Formatting** as you type
 - **Dark Mode** support (automatic based on system preference)
 - **Responsive Design** works on desktop and mobile
+- **Markdown Reader**: paste Markdown or open a `.md` file and see a live GitHub-flavored preview (tables, task lists, code blocks). Raw HTML is sanitized with DOMPurify, and remote images are blocked by the CSP so reading a document never makes a network request
+- **SQL Formatter**: format SQL for 14 dialects (PostgreSQL, MySQL, SQL Server, Oracle, BigQuery, Snowflake, …) with keyword case and indentation options, then copy or download the result
 
 ## 🛠️ Technology Stack
 
@@ -77,7 +79,7 @@ npm run build
 ### Common Vulnerabilities Avoided
 
 - **Prototype Pollution**: Using native `JSON.parse()` avoids custom parsers that might be vulnerable
-- **XSS Attacks**: CSP headers and React's built-in XSS protection
+- **XSS Attacks**: CSP headers, React's built-in XSS protection, and DOMPurify sanitization of rendered Markdown
 - **Data Exfiltration**: No network requests are made
 - **Injection Attacks**: No server-side processing means no injection vectors
 
