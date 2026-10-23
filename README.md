@@ -25,7 +25,7 @@ This tool is designed with security and privacy as the top priorities:
 - **Real-time Formatting** as you type
 - **Dark Mode** support (automatic based on system preference)
 - **Responsive Design** works on desktop and mobile
-- **Markdown Reader**: paste Markdown or open a `.md` file and see a live GitHub-flavored preview (tables, task lists, code blocks). Raw HTML is sanitized with DOMPurify, and remote images are blocked by the CSP so reading a document never makes a network request
+- **Markdown Reader**: paste Markdown or open a `.md` file and see a live GitHub-flavored preview (tables, task lists, code blocks). Raw HTML is sanitized with DOMPurify, and remote images and media are never loaded (they show as a placeholder, and the CSP blocks them as a second layer) so reading a document never makes a network request
 - **SQL Formatter**: format SQL for 14 dialects (PostgreSQL, MySQL, SQL Server, Oracle, BigQuery, Snowflake, …) with keyword case and indentation options, then copy or download the result
 
 ## 🛠️ Technology Stack
