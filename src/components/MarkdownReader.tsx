@@ -3,8 +3,17 @@ import './JsonFormatter.css'
 import './MarkdownReader.css'
 import { renderMarkdown } from '../utils/markdown'
 
+type ViewMode = 'split' | 'write' | 'read'
+
+const VIEW_MODES: { value: ViewMode; label: string }[] = [
+  { value: 'split', label: 'Split' },
+  { value: 'write', label: 'Write' },
+  { value: 'read', label: 'Read' },
+]
+
 const MarkdownReader = () => {
   const [input, setInput] = useState('')
+  const [view, setView] = useState<ViewMode>('split')
   const [fileName, setFileName] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -28,6 +37,7 @@ const MarkdownReader = () => {
       setInput(await file.text())
       setFileName(file.name)
       setError(null)
+      setView('read')
     } catch {
       setError(`Could not read ${file.name}`)
     }
@@ -54,7 +64,7 @@ const MarkdownReader = () => {
   const lineCount = input ? input.split('\n').length : 0
 
   return (
-    <div className="json-formatter">
+    <div className="json-formatter markdown-reader">
       <div className="toolbar">
         <div className="toolbar-left">
           <div className="toolbar-section">
@@ -68,6 +78,18 @@ const MarkdownReader = () => {
         </div>
 
         <div className="toolbar-right">
+          <div className="view-switch" role="group" aria-label="Layout">
+            {VIEW_MODES.map((mode) => (
+              <button
+                key={mode.value}
+                className={`view-switch-btn ${view === mode.value ? 'active' : ''}`}
+                aria-pressed={view === mode.value}
+                onClick={() => setView(mode.value)}
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
           <input
             ref={fileInputRef}
             type="file"
@@ -86,8 +108,8 @@ const MarkdownReader = () => {
         </div>
       </div>
 
-      <div className="editor-grid">
-        <div className="editor-card">
+      <div className={`markdown-grid view-${view}`}>
+        <div className="editor-card markdown-input-card">
           <div className="card-header">
             <div className="card-title-group">
               <span className="card-icon">📥</span>
@@ -117,7 +139,7 @@ const MarkdownReader = () => {
           </div>
         </div>
 
-        <div className="editor-card">
+        <div className="editor-card markdown-preview-card">
           <div className="card-header">
             <div className="card-title-group">
               <span className="card-icon">👁️</span>

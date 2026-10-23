@@ -150,3 +150,89 @@
 .markdown-preview img {
   max-width: 100%;
 }
+
+.markdown-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+  min-width: 0;
+}
+
+.markdown-reader .editor-card:hover {
+  transform: none;
+}
+
+/* Split panes fill most of the viewport instead of a fixed small box. */
+.markdown-grid .card-body {
+  height: calc(100vh - 260px);
+  min-height: 420px;
+  max-height: none;
+}
+
+.markdown-grid.view-write,
+.markdown-grid.view-read {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.markdown-grid.view-write .markdown-preview-card,
+.markdown-grid.view-read .markdown-input-card {
+  display: none;
+}
+
+/* Read mode is a document: it grows with the content and the page scrolls. */
+.markdown-grid.view-read .card-body {
+  height: auto;
+  min-height: 240px;
+}
+
+.markdown-grid.view-read .card-scroll-area {
+  overflow: visible;
+}
+
+.markdown-grid.view-read .markdown-preview {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 32px;
+  font-size: 16px;
+}
+
+@media (max-width: 968px) {
+  .markdown-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .markdown-grid .card-body {
+    height: 60vh;
+  }
+}
+
+.view-switch {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.view-switch-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.view-switch-btn:hover {
+  color: var(--text-primary);
+}
+
+.view-switch-btn.active {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}

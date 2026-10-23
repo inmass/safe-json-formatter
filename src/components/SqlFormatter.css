@@ -1,0 +1,76 @@
+/* SQL is read top to bottom, so input and output stack full width instead of sitting side by side. */
+.sql-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 32px;
+  min-width: 0;
+}
+
+.sql-formatter .editor-card:hover {
+  transform: none;
+}
+
+.sql-input-body {
+  min-height: 0;
+  max-height: none;
+}
+
+.sql-input-body .editor-textarea {
+  height: 180px;
+  min-height: 96px;
+  resize: vertical;
+}
+
+/* The output grows with the query; the page scrolls instead of a small inner box. */
+.sql-output-body {
+  min-height: 160px;
+  max-height: none;
+  overflow: visible;
+}
+
+.sql-output {
+  margin: 0;
+  padding: 24px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+.sql-formatter {
+  --sql-keyword: #7c3aed;
+  --sql-function: #0369a1;
+  --sql-string: #15803d;
+  --sql-identifier: #b45309;
+  --sql-number: #c2410c;
+  --sql-comment: #64748b;
+  --sql-operator: #db2777;
+  --sql-variable: #0d9488;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sql-formatter {
+    --sql-keyword: #c4b5fd;
+    --sql-function: #7dd3fc;
+    --sql-string: #86efac;
+    --sql-identifier: #fcd34d;
+    --sql-number: #fdba74;
+    --sql-comment: #94a3b8;
+    --sql-operator: #f9a8d4;
+    --sql-variable: #5eead4;
+  }
+}
+
+.sql-keyword { color: var(--sql-keyword); font-weight: 700; }
+.sql-function { color: var(--sql-function); }
+.sql-string { color: var(--sql-string); }
+.sql-identifier { color: var(--sql-identifier); }
+.sql-number { color: var(--sql-number); }
+.sql-comment { color: var(--sql-comment); font-style: italic; }
+.sql-operator { color: var(--sql-operator); }
+.sql-variable { color: var(--sql-variable); }
+.sql-punctuation { color: var(--text-secondary); }

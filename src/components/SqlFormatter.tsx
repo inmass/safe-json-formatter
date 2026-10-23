@@ -1,6 +1,8 @@
 import { useState, useCallback, useMemo } from 'react'
 import { format, KeywordCase, SqlLanguage } from 'sql-formatter'
 import './JsonFormatter.css'
+import './SqlFormatter.css'
+import { tokenizeSql } from '../utils/sqlHighlight'
 
 const DIALECTS: { value: SqlLanguage; label: string }[] = [
   { value: 'sql', label: 'Standard SQL' },
@@ -100,9 +102,11 @@ const SqlFormatter = () => {
   }, [output])
 
   const isValid = !error && output.length > 0
+  const tokens = useMemo(() => tokenizeSql(output), [output])
+  const lineCount = output ? output.split('\n').length : 0
 
   return (
-    <div className="json-formatter">
+    <div className="json-formatter sql-formatter">
       <div className="toolbar">
         <div className="toolbar-left">
           <div className="toolbar-section">
@@ -164,7 +168,7 @@ const SqlFormatter = () => {
         </div>
       </div>
 
-      <div className="editor-grid">
+      <div className="sql-stack">
         <div className="editor-card">
           <div className="card-header">
             <div className="card-title-group">
@@ -182,7 +186,7 @@ const SqlFormatter = () => {
               </button>
             )}
           </div>
-          <div className="card-body">
+          <div className="card-body sql-input-body">
             <textarea
               className={`editor-textarea ${error ? 'error' : ''}`}
               value={input}
@@ -201,7 +205,7 @@ const SqlFormatter = () => {
                 <h3 className="card-title">Formatted Output</h3>
                 {output.length > 0 && (
                   <span className="card-meta">
-                    {output.length.toLocaleString()} characters
+                    {lineCount.toLocaleString()} lines • {output.length.toLocaleString()} characters
                     {isValid && <span className="status-badge success">✓ Formatted</span>}
                   </span>
                 )}
@@ -224,14 +228,19 @@ const SqlFormatter = () => {
               </div>
             )}
           </div>
-          <div className="card-body card-body-output">
-            <div className="card-scroll-area">
-              {output ? (
-                <pre className="json-output-minified sql-output">{output}</pre>
-              ) : (
-                <div className="json-output-empty">Formatted SQL will appear here...</div>
-              )}
-            </div>
+          <div className="card-body card-body-output sql-output-body">
+            {output ? (
+              // Tokens are rendered as React text nodes, never as HTML.
+              <pre className="sql-output">
+                {tokens.map((token, index) => (
+                  token.type === 'plain'
+                    ? token.text
+                    : <span key={index} className={`sql-${token.type}`}>{token.text}</span>
+                ))}
+              </pre>
+            ) : (
+              <div className="json-output-empty">Formatted SQL will appear here...</div>
+            )}
           </div>
         </div>
       </div>
